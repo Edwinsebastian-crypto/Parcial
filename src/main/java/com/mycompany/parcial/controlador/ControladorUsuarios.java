@@ -17,6 +17,7 @@ public class ControladorUsuarios {
     private void cargarUsuariosQuemados() {
         // Estudiantes
         usuariosGuardados.add(new Usuario("1001", "Juan", "Perez", "juan.perez@estudiante.edu", "Estudiante"));
+        usuariosGuardados.add(new Usuario("1002", "Edwin", "Leal", "edwin.leal@estudiante.edu", "Estudiante"));
 
         // Tutores
         usuariosGuardados.add(new Usuario("2001", "Carlos", "Ramirez", "carlos.ramirez@tutor.edu", "Tutor"));

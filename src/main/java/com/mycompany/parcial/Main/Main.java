@@ -12,7 +12,18 @@ import javax.swing.SwingUtilities;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+/**
+ * Punto de entrada principal de la aplicación.
+ * <p>
+ * Esta clase inicia la interfaz gráfica y muestra primero una pantalla de
+ * introducción antes de cargar la ventana principal del sistema.
+ */
 public class Main {
+    /**
+     * Lanza la aplicación en el hilo de eventos de Swing.
+     *
+     * @param args argumentos de línea de comandos (no usados)
+     */
     public static void main(String[] args) {
         // Es buena práctica ejecutar la interfaz gráfica en el hilo de eventos de Swing
         // (EDT)
@@ -21,6 +32,9 @@ public class Main {
         });
     }
 
+    /**
+     * Construye la ventana principal y muestra primero el panel de bienvenida.
+     */
     private static void crearYMostrarGUI() {
         // Configurar la ventana principal
         JFrame frame = new JFrame("Plataforma UDI - STEP");

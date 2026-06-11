@@ -14,6 +14,12 @@ import com.mycompany.parcial.controlador.GestorEvidencias;
 import java.time.LocalDate;
 import java.io.File;
 
+/**
+ * Panel principal del sistema que agrupa la gestión de estudiantes, tutores y asesores.
+ *
+ * <p>Incluye un menú lateral de navegación, una pantalla de bienvenida y varias vistas
+ * que se activan según el rol del usuario.</p>
+ */
 public class PanelEstudiante extends JPanel {
 
     private CardLayout cardLayout;
@@ -88,6 +94,13 @@ public class PanelEstudiante extends JPanel {
         add(panelDerecho, BorderLayout.CENTER);
     }
 
+    /**
+     * Maneja el ingreso exitoso de un usuario y muestra la vista correspondiente
+     * según el rol seleccionado.
+     *
+     * @param rolUI rol elegido por el usuario en la interfaz
+     * @param usuario datos del usuario autenticado
+     */
     public void loginExitoso(String rolUI, Usuario usuario) {
         this.usuarioActual = usuario;
         
@@ -114,6 +127,10 @@ public class PanelEstudiante extends JPanel {
         }
     }
 
+    /**
+     * Restablece el estado de la aplicación cuando el login falla o el usuario
+     * cierra sesión.
+     */
     public void loginFallido() {
         this.usuarioActual = null;
         if (panelLoginInstancia != null) {

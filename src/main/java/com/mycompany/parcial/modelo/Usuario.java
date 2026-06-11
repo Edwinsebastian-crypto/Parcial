@@ -1,10 +1,18 @@
 package com.mycompany.parcial.modelo;
 
+/**
+ * Representa un usuario registrado en la plataforma con su rol asignado.
+ */
 public class Usuario {
+    /** Cédula o identificador único del usuario. */
     private String cedula;
+    /** Nombre del usuario. */
     private String nombre;
+    /** Apellido del usuario. */
     private String apellido;
+    /** Correo electrónico del usuario. */
     private String correo;
+    /** Rol dentro del sistema (Estudiante, Tutor, Asesor). */
     private String rol; // Estudiante, Tutor, Asesor
 
     public Usuario(String cedula, String nombre, String apellido, String correo, String rol) {

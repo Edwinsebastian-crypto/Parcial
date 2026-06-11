@@ -8,6 +8,12 @@ import javax.swing.JScrollPane;
 import javax.swing.JButton;
 import javax.swing.plaf.basic.BasicScrollBarUI;
 
+/**
+ * Utilidades de estilo compartidas para la aplicación.
+ *
+ * <p>Contiene colores, fuentes y métodos de estilo que garantizan una apariencia
+ * consistente en todos los paneles.</p>
+ */
 public class StyleUtils {
     // --- COLORES DEL LOGO Y PRESENTACIÓN INICIAL ---
     public static final Color COLOR_GRADIENTE_TOP = new Color(10, 20, 50);

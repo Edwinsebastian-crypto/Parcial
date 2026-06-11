@@ -12,6 +12,12 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 
+/**
+ * Formulario de revisión de evidencia con campos de estado, calificación y archivo.
+ *
+ * <p>Se reutiliza dentro del panel de tutor para leer y actualizar propiedades
+ * de una evidencia seleccionada.</p>
+ */
 public class PathFormPanel extends JPanel {
 
     // Componentes del formulario

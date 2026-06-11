@@ -15,6 +15,12 @@ import com.mycompany.parcial.modelo.Evidencia;
 import com.mycompany.parcial.modelo.Usuario;
 import com.mycompany.parcial.controlador.GestorEvidencias;
 
+/**
+ * Panel dedicado a los tutores académicos.
+ *
+ * <p>Contiene una lista de evidencias cargadas y un formulario de revisión que
+ * permite calificar y actualizar el estado de cada evidencia.</p>
+ */
 public class PanelTutor extends JPanel {
 
     // Variables para manejar la navegación entre la tabla y el formulario
@@ -28,10 +34,20 @@ public class PanelTutor extends JPanel {
     // Callback para el botón Salir
     private Runnable onSalirListener;
 
+    /**
+     * Registra el callback que se ejecuta al cerrar sesión o salir del panel.
+     *
+     * @param listener acción a ejecutar cuando se presiona Salir
+     */
     public void setOnSalirListener(Runnable listener) {
         this.onSalirListener = listener;
     }
 
+    /**
+     * Asigna el usuario actual que está utilizando el panel de tutor.
+     *
+     * @param u usuario autenticado
+     */
     public void setUsuarioActual(Usuario u) {
         this.usuarioActual = u;
     }

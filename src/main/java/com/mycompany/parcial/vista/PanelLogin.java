@@ -5,6 +5,12 @@ import java.awt.*;
 import com.mycompany.parcial.controlador.ControladorUsuarios;
 import com.mycompany.parcial.modelo.Usuario;
 
+/**
+ * Panel de inicio de sesión que solicita cédula y rol de usuario.
+ *
+ * <p>Se integra dentro de la barra lateral del panel principal y valida el
+ * usuario contra una lista de usuarios predefinidos.</p>
+ */
 public class PanelLogin extends JPanel {
 
     private PanelEstudiante panelEstudiante;
@@ -92,6 +98,10 @@ public class PanelLogin extends JPanel {
         btnIngresar.addActionListener(e -> procesarLogin());
     }
 
+    /**
+     * Valida el usuario ingresado y notifica al panel principal si el login fue
+     * exitoso o no.
+     */
     private void procesarLogin() {
         String cedulaInput = txtUsuario.getText().trim();
         String rolUI = (String) comboRol.getSelectedItem();
@@ -124,6 +134,9 @@ public class PanelLogin extends JPanel {
         }
     }
 
+    /**
+     * Limpia los campos del formulario de login para una nueva sesión.
+     */
     public void limpiarFormulario() {
         txtUsuario.setText("");
         comboRol.setSelectedIndex(0);

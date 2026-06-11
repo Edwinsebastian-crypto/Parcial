@@ -15,6 +15,12 @@ import java.awt.event.MouseEvent;
 import com.mycompany.parcial.modelo.Evidencia;
 import com.mycompany.parcial.controlador.GestorEvidencias;
 
+/**
+ * Panel dedicado a los asesores pedagógicos.
+ *
+ * <p>Permite consultar observaciones sobre los estudiantes y editar comentarios
+ * en un formulario detallado.</p>
+ */
 public class PanelAsesor extends JPanel {
 
     private CardLayout cardLayout;

@@ -4,6 +4,12 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.CubicCurve2D;
 
+/**
+ * Panel de presentación inicial con logotipo y fondo degradado.
+ *
+ * <p>Se muestra durante unos segundos al iniciar la aplicación antes de pasar al
+ * dashboard principal.</p>
+ */
 public class StepPanel extends JPanel {
     private static final long serialVersionUID = 1L;
 

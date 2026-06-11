@@ -1,17 +1,33 @@
 package com.mycompany.parcial.modelo;
 
+/**
+ * Representa una evidencia cargada por un estudiante, junto con información de
+ * revisión y calificación.
+ */
 public class Evidencia {
+    /** Identificador único generado automáticamente. */
     private String idEvidencia;
+    /** Identificador del estudiante que cargó la evidencia. */
     private String idEstudiante;
+    /** Nombre completo del estudiante que subió la evidencia. */
     private String nombreEstudiante;
+    /** Nombre o título de la evidencia. */
     private String nombreEvidencia;
+    /** Fecha en la que se cargó la evidencia. */
     private String fechaCarga;
+    /** Descripción de la evidencia. */
     private String descripcion;
+    /** Ruta del archivo asociado a la evidencia. */
     private String pathArchivo;
+    /** Estado de revisión de la evidencia. */
     private String estado;
+    /** Calificación asignada por el tutor o asesor. */
     private String calificacion;
+    /** Profesor o tutor responsable de la revisión. */
     private String profesor;
+    /** Fecha en la que se realizó la calificación. */
     private String fechaCalificacion;
+    /** Observaciones del tutor o asesor. */
     private String observacion;
 
     public Evidencia() {

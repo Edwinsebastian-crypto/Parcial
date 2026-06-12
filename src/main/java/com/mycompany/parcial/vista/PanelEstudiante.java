@@ -10,6 +10,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import com.mycompany.parcial.modelo.Usuario;
 import com.mycompany.parcial.modelo.Evidencia;
+import com.mycompany.parcial.modelo.Entrega;
 import com.mycompany.parcial.controlador.GestorEvidencias;
 import java.time.LocalDate;
 import java.io.File;
@@ -31,10 +32,15 @@ public class PanelEstudiante extends JPanel {
     private JPanel sidebarPanel;
     private Usuario usuarioActual;
     private DefaultTableModel modeloTablaEstudiante;
+    private DefaultTableModel modeloTablaCalEvidencias;
     private JTable tablaEstudiante;
+    private JTable tablaCalEvidencias;
     private PanelLogin panelLoginInstancia;
     private PanelTutor panelTutor;
     private PanelAsesor panelAsesor;
+    private static final String VISTA_ESTUDIANTE_OPCIONES = "VISTA_ESTUDIANTE_OPCIONES";
+    private static final String VISTA_GESTION_EVIDENCIAS = "VISTA_GESTION_EVIDENCIAS";
+    private static final String VISTA_CAL_EVIDENCIAS = "VISTA_CAL_EVIDENCIAS";
 
     public PanelEstudiante() {
         setLayout(new BorderLayout());
@@ -56,7 +62,9 @@ public class PanelEstudiante extends JPanel {
         panelContenidoDinamico.setBackground(StyleUtils.COLOR_CONTENT_BG);
 
         // Registrar las vistas ("cartas")
-        panelContenidoDinamico.add(crearVistaResultadosTabla(), "VISTA_RESULTADOS");
+        panelContenidoDinamico.add(crearVistaOpcionesEstudiante(), VISTA_ESTUDIANTE_OPCIONES);
+        panelContenidoDinamico.add(crearVistaResultadosTabla(), VISTA_GESTION_EVIDENCIAS);
+        panelContenidoDinamico.add(crearVistaCalEvidencias(), VISTA_CAL_EVIDENCIAS);
 
         // Instanciar los paneles de Tutor y Asesor y agregar SOLO su contenido
         panelTutor = new PanelTutor();
@@ -174,6 +182,7 @@ public class PanelEstudiante extends JPanel {
 
         // Estilo visual plano e idéntico al mockup (Líneas negras gruesas, celdas
         // blancas amplias)
+        tablaEstudiante.setFillsViewportHeight(true);
         tablaEstudiante.setRowHeight(60); // Altura de fila grande para que se vea espacioso como el dibujo
         tablaEstudiante.setShowGrid(true);
         tablaEstudiante.setGridColor(Color.BLACK);
@@ -223,11 +232,11 @@ public class PanelEstudiante extends JPanel {
 
         int altoBoton = 35;
 
-        JButton btnCancelar = crearBotonRedondeadoDialog("Cancelar", Color.WHITE, Color.BLACK);
-        btnCancelar.setPreferredSize(new Dimension(120, altoBoton));
-        agregarHoverAzul(btnCancelar);
-        btnCancelar.addActionListener(e -> tablaEstudiante.clearSelection());
-        panelBotones.add(btnCancelar);
+        JButton btnRegresar = crearBotonRedondeadoDialog("Regresar", Color.WHITE, Color.BLACK);
+        btnRegresar.setPreferredSize(new Dimension(120, altoBoton));
+        agregarHoverAzul(btnRegresar);
+        btnRegresar.addActionListener(e -> cardLayout.show(panelContenidoDinamico, VISTA_ESTUDIANTE_OPCIONES));
+        panelBotones.add(btnRegresar);
 
         JButton btnNueEvidencia = crearBotonRedondeadoDialog("Nue. Evidencia", Color.WHITE, Color.BLACK);
         btnNueEvidencia.setPreferredSize(new Dimension(140, altoBoton));
@@ -297,6 +306,166 @@ public class PanelEstudiante extends JPanel {
         cargarDatosTablaEstudiante();
 
         return vista;
+    }
+
+    /**
+     * VISTA: opciones principales para el estudiante despuÃ©s de iniciar sesiÃ³n.
+     */
+    private JPanel crearVistaOpcionesEstudiante() {
+        JPanel vista = new JPanel(new GridBagLayout());
+        vista.setBackground(StyleUtils.COLOR_CONTENT_BG);
+        vista.setBorder(new EmptyBorder(40, 50, 40, 50));
+
+        JPanel panelOpciones = new JPanel(new GridLayout(1, 2, 35, 0));
+        panelOpciones.setOpaque(false);
+
+        JButton btnGestionar = crearBotonRedondeadoDialog("Gestionar Evidencia", Color.WHITE, Color.BLACK);
+        btnGestionar.setPreferredSize(new Dimension(220, 58));
+        btnGestionar.setFont(StyleUtils.FUENTE_MENU);
+        agregarHoverAzul(btnGestionar);
+        btnGestionar.addActionListener(e -> {
+            cargarDatosTablaEstudiante();
+            cardLayout.show(panelContenidoDinamico, VISTA_GESTION_EVIDENCIAS);
+        });
+
+        JButton btnCalEvidencias = crearBotonRedondeadoDialog("Cal. Evidencias", Color.WHITE, Color.BLACK);
+        btnCalEvidencias.setPreferredSize(new Dimension(220, 58));
+        btnCalEvidencias.setFont(StyleUtils.FUENTE_MENU);
+        agregarHoverAzul(btnCalEvidencias);
+        btnCalEvidencias.addActionListener(e -> {
+            cargarDatosTablaCalEvidencias();
+            cardLayout.show(panelContenidoDinamico, VISTA_CAL_EVIDENCIAS);
+        });
+
+        panelOpciones.add(btnGestionar);
+        panelOpciones.add(btnCalEvidencias);
+
+        vista.add(panelOpciones);
+        return vista;
+    }
+
+    /**
+     * VISTA: entregas/calificaciÃ³n de evidencias del estudiante segÃºn el mockup.
+     */
+    private JPanel crearVistaCalEvidencias() {
+        JPanel vista = new JPanel(new BorderLayout());
+        vista.setBackground(StyleUtils.COLOR_CONTENT_BG);
+        vista.setBorder(new EmptyBorder(30, 30, 12, 30));
+
+        JPanel panelCentro = new JPanel(new GridBagLayout());
+        panelCentro.setBackground(new Color(239, 239, 239));
+        panelCentro.setBorder(new EmptyBorder(15, 15, 15, 15));
+
+        String[] columnas = {"ID", "Actividad", "Fecha límite", "Descripción"};
+        modeloTablaCalEvidencias = new DefaultTableModel(null, columnas) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return column == 1;
+            }
+        };
+
+        tablaCalEvidencias = new JTable(modeloTablaCalEvidencias) {
+            @Override
+            public String getToolTipText(java.awt.event.MouseEvent e) {
+                java.awt.Point p = e.getPoint();
+                int rowIndex = rowAtPoint(p);
+                int colIndex = columnAtPoint(p);
+                if (rowIndex >= 0 && colIndex >= 0) {
+                    Object value = getValueAt(rowIndex, colIndex);
+                    if (value != null && !value.toString().isEmpty()) {
+                        return "<html><p width='300'>" + value.toString().replaceAll("\n", "<br>") + "</p></html>";
+                    }
+                }
+                return super.getToolTipText(e);
+            }
+        };
+        tablaCalEvidencias.setFillsViewportHeight(true);
+        tablaCalEvidencias.setRowHeight(44);
+        tablaCalEvidencias.setFont(StyleUtils.FUENTE_REGULAR);
+        tablaCalEvidencias.setShowGrid(true);
+        tablaCalEvidencias.setGridColor(Color.BLACK);
+        tablaCalEvidencias.setBackground(Color.WHITE);
+        tablaCalEvidencias.setSelectionBackground(new Color(224, 239, 255));
+
+        JTableHeader header = tablaCalEvidencias.getTableHeader();
+        header.setFont(StyleUtils.FUENTE_REGULAR);
+        header.setBackground(Color.WHITE);
+        header.setForeground(Color.BLACK);
+        header.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+        header.setPreferredSize(new Dimension(0, 32));
+
+        javax.swing.table.DefaultTableCellRenderer centerRenderer = new javax.swing.table.DefaultTableCellRenderer();
+        centerRenderer.setHorizontalAlignment(SwingConstants.CENTER);
+        for (int i = 0; i < tablaCalEvidencias.getColumnCount(); i++) {
+            tablaCalEvidencias.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
+        }
+
+        tablaCalEvidencias.getColumnModel().getColumn(0).setPreferredWidth(80);
+        tablaCalEvidencias.getColumnModel().getColumn(1).setPreferredWidth(140);
+        tablaCalEvidencias.getColumnModel().getColumn(2).setPreferredWidth(150);
+        tablaCalEvidencias.getColumnModel().getColumn(3).setPreferredWidth(190);
+        tablaCalEvidencias.getColumnModel().getColumn(1).setCellRenderer(new BotonTablaRenderer());
+        tablaCalEvidencias.getColumnModel().getColumn(1).setCellEditor(new BotonCargarArchivoEditor(tablaCalEvidencias));
+
+        JScrollPane scrollPane = new JScrollPane(tablaCalEvidencias);
+        scrollPane.setBorder(BorderFactory.createEmptyBorder());
+        scrollPane.getViewport().setBackground(Color.WHITE);
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.weightx = 1.0;
+        gbc.weighty = 1.0;
+        gbc.fill = GridBagConstraints.BOTH;
+        panelCentro.add(scrollPane, gbc);
+
+        vista.add(panelCentro, BorderLayout.CENTER);
+
+        JPanel panelBotones = new JPanel(new BorderLayout());
+        panelBotones.setBackground(StyleUtils.COLOR_CONTENT_BG);
+        panelBotones.setBorder(new EmptyBorder(18, 0, 0, 0));
+
+        JButton btnRegresar = crearBotonRedondeadoDialog("Regresar", Color.WHITE, Color.BLACK);
+        btnRegresar.setPreferredSize(new Dimension(120, 34));
+        agregarHoverAzul(btnRegresar);
+        btnRegresar.addActionListener(e -> cardLayout.show(panelContenidoDinamico, VISTA_ESTUDIANTE_OPCIONES));
+
+        JButton btnSalir = crearBotonRedondeadoDialog("Salir", Color.WHITE, Color.BLACK);
+        btnSalir.setPreferredSize(new Dimension(120, 34));
+        agregarHoverAzul(btnSalir);
+        btnSalir.addActionListener(e -> loginFallido());
+
+        panelBotones.add(btnRegresar, BorderLayout.WEST);
+        panelBotones.add(btnSalir, BorderLayout.EAST);
+        vista.add(panelBotones, BorderLayout.SOUTH);
+
+        cargarDatosTablaCalEvidencias();
+        return vista;
+    }
+
+    public void cargarDatosTablaCalEvidencias() {
+        if (modeloTablaCalEvidencias == null) {
+            return;
+        }
+        modeloTablaCalEvidencias.setRowCount(0);
+        for (Entrega entrega : GestorEvidencias.getInstancia().getEntregas()) {
+            String textoBoton = "Cargar Archivo";
+            if (usuarioActual != null) {
+                for (Evidencia ev : GestorEvidencias.getInstancia().getEvidencias()) {
+                    if (ev.getIdEstudiante().equals(usuarioActual.getCedula()) &&
+                        ev.getNombreEvidencia().equals("Cal. Evidencia " + entrega.getId())) {
+                        textoBoton = ev.getPathArchivo();
+                        break;
+                    }
+                }
+            }
+            modeloTablaCalEvidencias.addRow(new Object[] {
+                    entrega.getId(),
+                    textoBoton,
+                    entrega.getFechaLimite(),
+                    entrega.getDescripcion()
+            });
+        }
     }
 
     public void cargarDatosTablaEstudiante() {
@@ -583,7 +752,7 @@ public class PanelEstudiante extends JPanel {
         sidebarPanel.setLayout(null);
 
         // Alineación perfecta con anchos definidos y un padding izquierdo en crearBotonMenu
-        btnMenuEstudiantes = crearBotonMenu("", 280, "VISTA_RESULTADOS");
+        btnMenuEstudiantes = crearBotonMenu("", 280, VISTA_ESTUDIANTE_OPCIONES);
         btnMenuTutores = crearBotonMenu("", 360, "VISTA_TUTOR");
         btnMenuAsesores = crearBotonMenu("", 440, "VISTA_ASESOR");
 
@@ -624,7 +793,7 @@ public class PanelEstudiante extends JPanel {
         if(btnMenuEstudiantes != null) {
             btnMenuEstudiantes.setForeground(Color.WHITE);
             String txt = "<html><table width='200' cellpadding='0'><tr><td width='35' valign='top' style='font-size:18px; text-align:left;'>🎓</td><td style='font-size:14px; color:white;'>Estudiantes" 
-                       + (selectedMenuY == 280 ? "<br><span style='font-size:11px; color:#cccccc;'>├─ Gestión de Evidencias</span>" : "") 
+                       + (selectedMenuY == 280 ? "<br><span style='font-size:11px; color:#cccccc;'>Gestionar / Cal. Evidencias</span>" : "") 
                        + "</td></tr></table></html>";
             btnMenuEstudiantes.setText(txt);
         }
@@ -666,13 +835,131 @@ public class PanelEstudiante extends JPanel {
             } else if ("VISTA_ASESOR".equals(vistaDestino) && panelAsesor != null) {
                 panelAsesor.cargarDatosTablaAsesor();
                 panelAsesor.resetToTabla();
-            } else if ("VISTA_RESULTADOS".equals(vistaDestino)) {
+            } else if (VISTA_ESTUDIANTE_OPCIONES.equals(vistaDestino)) {
                 cargarDatosTablaEstudiante();
             }
             
             cardLayout.show(panelContenidoDinamico, vistaDestino);
         });
         return btn;
+    }
+
+    private class BotonTablaRenderer extends JButton implements javax.swing.table.TableCellRenderer {
+        BotonTablaRenderer() {
+            setText("Cargar Archivo");
+            setBackground(Color.WHITE);
+            setForeground(Color.BLACK);
+            setFont(StyleUtils.FUENTE_REGULAR);
+            setBorder(BorderFactory.createLineBorder(Color.BLACK));
+            setFocusPainted(false);
+            setContentAreaFilled(true);
+        }
+
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
+                boolean hasFocus, int row, int column) {
+            setText(value == null ? "Cargar Archivo" : value.toString());
+            
+            boolean expirado = false;
+            try {
+                int filaModelo = table.convertRowIndexToModel(row);
+                String fechaStr = table.getModel().getValueAt(filaModelo, 2).toString();
+                java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy");
+                java.time.LocalDate fechaLimite = java.time.LocalDate.parse(fechaStr, formatter);
+                if (!fechaLimite.isAfter(java.time.LocalDate.now())) {
+                    expirado = true;
+                }
+            } catch (Exception e) {}
+            
+            if (expirado) {
+                setForeground(Color.RED);
+            } else {
+                setForeground(Color.BLACK);
+            }
+            return this;
+        }
+    }
+
+    private class BotonCargarArchivoEditor extends AbstractCellEditor implements javax.swing.table.TableCellEditor {
+        private final JButton boton;
+        private final JTable tabla;
+        private int fila;
+
+        BotonCargarArchivoEditor(JTable tabla) {
+            this.tabla = tabla;
+            this.boton = new JButton("Cargar Archivo");
+            boton.setBackground(Color.WHITE);
+            boton.setForeground(Color.BLACK);
+            boton.setFont(StyleUtils.FUENTE_REGULAR);
+            boton.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+            boton.setFocusPainted(false);
+            boton.addActionListener(e -> cargarArchivoActividad());
+        }
+
+        @Override
+        public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row,
+                int column) {
+            this.fila = row;
+            boton.setText(value == null ? "Cargar Archivo" : value.toString());
+            return boton;
+        }
+
+        @Override
+        public Object getCellEditorValue() {
+            return tabla.getValueAt(fila, 1);
+        }
+
+        private void cargarArchivoActividad() {
+            fireEditingStopped();
+
+            if (usuarioActual == null) {
+                JOptionPane.showMessageDialog(PanelEstudiante.this, "Debe iniciar sesión primero.");
+                return;
+            }
+
+            int filaModelo = tabla.convertRowIndexToModel(fila);
+            String fechaLimiteStr = tabla.getModel().getValueAt(filaModelo, 2).toString();
+            try {
+                java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy");
+                java.time.LocalDate fechaLimite = java.time.LocalDate.parse(fechaLimiteStr, formatter);
+                if (!fechaLimite.isAfter(java.time.LocalDate.now())) {
+                    JOptionPane.showMessageDialog(PanelEstudiante.this, "La fecha límite ha pasado o es hoy. Ya no se pueden cargar archivos.", "Entrega expirada", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+            } catch (Exception ex) {}
+
+            JFileChooser chooser = new JFileChooser();
+            if (chooser.showOpenDialog(PanelEstudiante.this) != JFileChooser.APPROVE_OPTION) {
+                return;
+            }
+
+            File archivo = chooser.getSelectedFile();
+            String idActividad = tabla.getModel().getValueAt(filaModelo, 0).toString();
+            String fechaLimite = tabla.getModel().getValueAt(filaModelo, 2).toString();
+            String descripcion = tabla.getModel().getValueAt(filaModelo, 3).toString();
+
+            Evidencia evidencia = new Evidencia();
+            evidencia.setIdEstudiante(usuarioActual.getCedula());
+            evidencia.setNombreEstudiante(usuarioActual.getNombre() + " " + usuarioActual.getApellido());
+            evidencia.setNombreEvidencia("Cal. Evidencia " + idActividad);
+            evidencia.setFechaCarga(LocalDate.now().toString());
+            evidencia.setDescripcion(descripcion + " - Fecha límite: " + fechaLimite);
+            evidencia.setPathArchivo(archivo.getAbsolutePath());
+            evidencia.setEstado("Sin revisar");
+            evidencia.setCalificacion("");
+            evidencia.setProfesor("");
+            evidencia.setFechaCalificacion("");
+            evidencia.setObservacion("");
+
+            GestorEvidencias.getInstancia().agregarEvidencia(evidencia);
+            cargarDatosTablaEstudiante();
+            cargarDatosTablaCalEvidencias();
+            if (panelTutor != null) panelTutor.cargarDatosTablaTutor();
+            if (panelAsesor != null) panelAsesor.cargarDatosTablaAsesor();
+
+            JOptionPane.showMessageDialog(PanelEstudiante.this,
+                    "Archivo cargado exitosamente: " + archivo.getName());
+        }
     }
 
     private void dibujarLogoSidebar(Graphics2D g2d, int x, int y) {

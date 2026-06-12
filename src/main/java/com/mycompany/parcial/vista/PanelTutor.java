@@ -10,8 +10,16 @@ import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
+import java.util.Date;
 import com.mycompany.parcial.modelo.Evidencia;
+import com.mycompany.parcial.modelo.Entrega;
 import com.mycompany.parcial.modelo.Usuario;
 import com.mycompany.parcial.controlador.GestorEvidencias;
 
@@ -29,7 +37,13 @@ public class PanelTutor extends JPanel {
     private PathFormPanel panelFormularioPath; // Asegúrate de tener creada esta clase
     private DefaultTableModel modeloTablaTutor;
     private JTable tablaTutor;
+    private DefaultTableModel modeloTablaCalEntregas;
+    private JTable tablaCalEntregas;
     private Usuario usuarioActual;
+    private static final String VISTA_OPCIONES_TUTOR = "VISTA_OPCIONES_TUTOR";
+    private static final String VISTA_TABLA = "VISTA_TABLA";
+    private static final String VISTA_CAL_ENTREGAS = "VISTA_CAL_ENTREGAS";
+    private static final String VISTA_FORMULARIO = "VISTA_FORMULARIO";
     
     // Callback para el botón Salir
     private Runnable onSalirListener;
@@ -71,15 +85,21 @@ public class PanelTutor extends JPanel {
         panelContenidoDinamico = new JPanel(cardLayout);
         panelContenidoDinamico.setBackground(StyleUtils.COLOR_CONTENT_BG);
 
-        // Vista 1: Tu contenido central modificado (La Tabla)
-        panelContenidoDinamico.add(crearContenidoCentral(), "VISTA_TABLA");
+        // Vista 1: opciones principales del tutor
+        panelContenidoDinamico.add(crearVistaOpcionesTutor(), VISTA_OPCIONES_TUTOR);
 
-        // Vista 2: El nuevo Formulario
+        // Vista 2: tabla de revisiÃ³n de evidencias
+        panelContenidoDinamico.add(crearContenidoCentral(), VISTA_TABLA);
+
+        // Vista 3: mÃ³dulo Cal. Entregas
+        panelContenidoDinamico.add(crearVistaCalEntregas(), VISTA_CAL_ENTREGAS);
+
+        // Vista 4: El formulario
         panelFormularioPath = new PathFormPanel();
-        panelContenidoDinamico.add(panelFormularioPath, "VISTA_FORMULARIO");
+        panelContenidoDinamico.add(panelFormularioPath, VISTA_FORMULARIO);
 
         // Listener para regresar del formulario a la tabla (Cancelar)
-        panelFormularioPath.addCancelarListener(e -> cardLayout.show(panelContenidoDinamico, "VISTA_TABLA"));
+        panelFormularioPath.addCancelarListener(e -> cardLayout.show(panelContenidoDinamico, VISTA_TABLA));
 
         // Listener para guardar cambios (Aceptar)
         panelFormularioPath.addAceptarListener(e -> {
@@ -97,7 +117,7 @@ public class PanelTutor extends JPanel {
 
                     cargarDatosTablaTutor();
                     JOptionPane.showMessageDialog(this, "Evidencia actualizada correctamente.");
-                    cardLayout.show(panelContenidoDinamico, "VISTA_TABLA");
+                    cardLayout.show(panelContenidoDinamico, VISTA_TABLA);
                 } catch (IllegalArgumentException ex) {
                     JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
                 }
@@ -111,7 +131,7 @@ public class PanelTutor extends JPanel {
     }
 
     public void resetToTabla() {
-        cardLayout.show(panelContenidoDinamico, "VISTA_TABLA");
+        cardLayout.show(panelContenidoDinamico, VISTA_OPCIONES_TUTOR);
     }
 
     /**
@@ -166,6 +186,7 @@ public class PanelTutor extends JPanel {
             }
         };
 
+        tablaTutor.setFillsViewportHeight(true);
         tablaTutor.setRowHeight(80); // Altura de fila grande para espacio visual
         tablaTutor.setShowGrid(true);
         tablaTutor.setGridColor(Color.BLACK);
@@ -215,8 +236,14 @@ public class PanelTutor extends JPanel {
         vista.add(scrollPane, BorderLayout.CENTER);
 
         // --- Botón Salir Inferior Derecho ---
-        JPanel panelBotones = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 10));
+        JPanel panelBotones = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
         panelBotones.setBackground(StyleUtils.COLOR_CONTENT_BG);
+
+        JButton btnRegresar = crearBotonRedondeado("Regresar", Color.WHITE, Color.BLACK);
+        btnRegresar.setPreferredSize(new Dimension(120, 35));
+        agregarHoverAzul(btnRegresar);
+        btnRegresar.addActionListener(e -> cardLayout.show(panelContenidoDinamico, VISTA_OPCIONES_TUTOR));
+        panelBotones.add(btnRegresar);
 
         JButton btnSalir = crearBotonRedondeado("Salir", Color.WHITE, Color.BLACK);
         btnSalir.setPreferredSize(new Dimension(120, 35));
@@ -235,6 +262,291 @@ public class PanelTutor extends JPanel {
         return vista;
     }
 
+    private JPanel crearVistaOpcionesTutor() {
+        JPanel vista = new JPanel(new GridBagLayout());
+        vista.setBackground(StyleUtils.COLOR_CONTENT_BG);
+        vista.setBorder(new EmptyBorder(40, 50, 40, 50));
+
+        JPanel panelOpciones = new JPanel(new GridLayout(1, 2, 35, 0));
+        panelOpciones.setOpaque(false);
+
+        JButton btnRevisar = crearBotonRedondeado("Revisar Evidencias", Color.WHITE, Color.BLACK);
+        btnRevisar.setPreferredSize(new Dimension(220, 58));
+        btnRevisar.setFont(StyleUtils.FUENTE_MENU);
+        agregarHoverAzul(btnRevisar);
+        btnRevisar.addActionListener(e -> {
+            cargarDatosTablaTutor();
+            cardLayout.show(panelContenidoDinamico, VISTA_TABLA);
+        });
+
+        JButton btnCalEntregas = crearBotonRedondeado("Cal. Entregas", Color.WHITE, Color.BLACK);
+        btnCalEntregas.setPreferredSize(new Dimension(220, 58));
+        btnCalEntregas.setFont(StyleUtils.FUENTE_MENU);
+        agregarHoverAzul(btnCalEntregas);
+        btnCalEntregas.addActionListener(e -> {
+            cargarDatosTablaCalEntregas();
+            cardLayout.show(panelContenidoDinamico, VISTA_CAL_ENTREGAS);
+        });
+
+        panelOpciones.add(btnRevisar);
+        panelOpciones.add(btnCalEntregas);
+        vista.add(panelOpciones);
+        return vista;
+    }
+
+    private JPanel crearVistaCalEntregas() {
+        JPanel vista = new JPanel(new BorderLayout());
+        vista.setBackground(StyleUtils.COLOR_CONTENT_BG);
+        vista.setBorder(new EmptyBorder(30, 30, 12, 30));
+
+        JPanel panelCentro = new JPanel(new GridBagLayout());
+        panelCentro.setBackground(new Color(239, 239, 239));
+        panelCentro.setBorder(new EmptyBorder(15, 15, 15, 15));
+
+        String[] columnas = {"ID", "Actividad", "Fecha límite", "Descripción"};
+        modeloTablaCalEntregas = new DefaultTableModel(null, columnas) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return column == 1;
+            }
+        };
+
+        tablaCalEntregas = new JTable(modeloTablaCalEntregas) {
+            @Override
+            public String getToolTipText(java.awt.event.MouseEvent e) {
+                java.awt.Point p = e.getPoint();
+                int rowIndex = rowAtPoint(p);
+                int colIndex = columnAtPoint(p);
+                if (rowIndex >= 0 && colIndex >= 0) {
+                    Object value = getValueAt(rowIndex, colIndex);
+                    if (value != null && !value.toString().isEmpty()) {
+                        return "<html><p width='300'>" + value.toString().replaceAll("\n", "<br>") + "</p></html>";
+                    }
+                }
+                return super.getToolTipText(e);
+            }
+        };
+        tablaCalEntregas.setFillsViewportHeight(true);
+        tablaCalEntregas.setRowHeight(44);
+        tablaCalEntregas.setFont(StyleUtils.FUENTE_REGULAR);
+        tablaCalEntregas.setShowGrid(true);
+        tablaCalEntregas.setGridColor(Color.BLACK);
+        tablaCalEntregas.setBackground(Color.WHITE);
+        tablaCalEntregas.setSelectionBackground(new Color(224, 239, 255));
+
+        JTableHeader header = tablaCalEntregas.getTableHeader();
+        header.setFont(StyleUtils.FUENTE_REGULAR);
+        header.setBackground(Color.WHITE);
+        header.setForeground(Color.BLACK);
+        header.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+        header.setPreferredSize(new Dimension(0, 32));
+
+        javax.swing.table.DefaultTableCellRenderer centerRenderer = new javax.swing.table.DefaultTableCellRenderer();
+        centerRenderer.setHorizontalAlignment(SwingConstants.CENTER);
+        for (int i = 0; i < tablaCalEntregas.getColumnCount(); i++) {
+            tablaCalEntregas.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
+        }
+
+        tablaCalEntregas.getColumnModel().getColumn(0).setPreferredWidth(80);
+        tablaCalEntregas.getColumnModel().getColumn(1).setPreferredWidth(140);
+        tablaCalEntregas.getColumnModel().getColumn(2).setPreferredWidth(150);
+        tablaCalEntregas.getColumnModel().getColumn(3).setPreferredWidth(190);
+        tablaCalEntregas.getColumnModel().getColumn(1).setCellRenderer(new CalArchivoRenderer());
+        tablaCalEntregas.getColumnModel().getColumn(1).setCellEditor(new CalArchivoEditor());
+
+        JScrollPane scrollPane = new JScrollPane(tablaCalEntregas);
+        scrollPane.setBorder(BorderFactory.createEmptyBorder());
+        scrollPane.getViewport().setBackground(Color.WHITE);
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.weightx = 1.0;
+        gbc.weighty = 1.0;
+        gbc.fill = GridBagConstraints.BOTH;
+        panelCentro.add(scrollPane, gbc);
+
+        vista.add(panelCentro, BorderLayout.CENTER);
+
+        JPanel panelBotones = new JPanel(new FlowLayout(FlowLayout.CENTER, 8, 10));
+        panelBotones.setBackground(StyleUtils.COLOR_CONTENT_BG);
+        panelBotones.setBorder(new EmptyBorder(16, 0, 0, 0));
+
+        JButton btnRegresar = crearBotonRedondeado("Regresar", Color.WHITE, Color.BLACK);
+        btnRegresar.setPreferredSize(new Dimension(118, 34));
+        agregarHoverAzul(btnRegresar);
+        btnRegresar.addActionListener(e -> cardLayout.show(panelContenidoDinamico, VISTA_OPCIONES_TUTOR));
+        panelBotones.add(btnRegresar);
+
+        JButton btnEditar = crearBotonRedondeado("Editar", Color.WHITE, Color.BLACK);
+        btnEditar.setPreferredSize(new Dimension(118, 34));
+        agregarHoverAzul(btnEditar);
+        btnEditar.addActionListener(e -> editarEntregaSeleccionada());
+        panelBotones.add(btnEditar);
+
+        JButton btnEliminar = crearBotonRedondeado("Eliminar", Color.WHITE, Color.BLACK);
+        btnEliminar.setPreferredSize(new Dimension(118, 34));
+        agregarHoverAzul(btnEliminar);
+        btnEliminar.addActionListener(e -> eliminarEntregaSeleccionada());
+        panelBotones.add(btnEliminar);
+
+        JButton btnNueva = crearBotonRedondeado("Nueva Entrega", Color.WHITE, Color.BLACK);
+        btnNueva.setPreferredSize(new Dimension(130, 34));
+        agregarHoverAzul(btnNueva);
+        btnNueva.addActionListener(e -> abrirDialogoEntrega(-1));
+        panelBotones.add(btnNueva);
+
+        JButton btnSalir = crearBotonRedondeado("Salir", Color.WHITE, Color.BLACK);
+        btnSalir.setPreferredSize(new Dimension(118, 34));
+        agregarHoverAzul(btnSalir);
+        btnSalir.addActionListener(e -> {
+            if (onSalirListener != null) {
+                onSalirListener.run();
+            }
+        });
+        panelBotones.add(btnSalir);
+
+        vista.add(panelBotones, BorderLayout.SOUTH);
+        cargarDatosTablaCalEntregas();
+        return vista;
+    }
+
+    private void editarEntregaSeleccionada() {
+        int fila = tablaCalEntregas.getSelectedRow();
+        if (fila == -1) {
+            JOptionPane.showMessageDialog(this, "Debe seleccionar una entrega primero.");
+            return;
+        }
+        abrirDialogoEntrega(tablaCalEntregas.convertRowIndexToModel(fila));
+    }
+
+    private void eliminarEntregaSeleccionada() {
+        int fila = tablaCalEntregas.getSelectedRow();
+        if (fila == -1) {
+            JOptionPane.showMessageDialog(this, "Debe seleccionar una entrega primero.");
+            return;
+        }
+        int confirmacion = JOptionPane.showConfirmDialog(this, "¿Desea eliminar esta entrega?",
+                "Confirmar eliminación", JOptionPane.YES_NO_OPTION);
+        if (confirmacion == JOptionPane.YES_OPTION) {
+            String id = modeloTablaCalEntregas.getValueAt(tablaCalEntregas.convertRowIndexToModel(fila), 0).toString();
+            GestorEvidencias.getInstancia().getEntregas().removeIf(entrega -> entrega.getId().equals(id));
+            cargarDatosTablaCalEntregas();
+        }
+    }
+
+    private void abrirDialogoEntrega(int filaModelo) {
+        boolean esEdicion = filaModelo >= 0;
+        JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(this),
+                esEdicion ? "Editar Entrega" : "Nueva Entrega", Dialog.ModalityType.APPLICATION_MODAL);
+        dialog.setSize(520, 380);
+        dialog.setLocationRelativeTo(this);
+        dialog.setLayout(new BorderLayout(10, 10));
+        dialog.getContentPane().setBackground(Color.WHITE);
+
+        JPanel formPanel = new JPanel(new GridBagLayout());
+        formPanel.setBorder(new EmptyBorder(25, 25, 10, 25));
+        formPanel.setBackground(Color.WHITE);
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(8, 8, 8, 8);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        
+        Font labelFont = StyleUtils.FUENTE_REGULAR;
+
+        Date fechaInicial = new Date();
+        SimpleDateFormat formato = new SimpleDateFormat("dd/MM/yyyy");
+        if (esEdicion) {
+            String fechaActual = modeloTablaCalEntregas.getValueAt(filaModelo, 2).toString();
+            try {
+                fechaInicial = formato.parse(fechaActual);
+            } catch (Exception ex) {}
+        }
+        
+        JSpinner spinnerFecha = new JSpinner(new SpinnerDateModel(fechaInicial, null, null, java.util.Calendar.DAY_OF_MONTH));
+        spinnerFecha.setEditor(new JSpinner.DateEditor(spinnerFecha, "dd/MM/yyyy"));
+        spinnerFecha.setFont(labelFont);
+        spinnerFecha.setBorder(BorderFactory.createCompoundBorder(
+            new javax.swing.border.LineBorder(new Color(180,180,180), 1, true),
+            BorderFactory.createEmptyBorder(4, 8, 4, 8)
+        ));
+
+        JTextArea txtDescripcion = new JTextArea(esEdicion ? modeloTablaCalEntregas.getValueAt(filaModelo, 3).toString() : "");
+        txtDescripcion.setLineWrap(true);
+        txtDescripcion.setWrapStyleWord(true);
+        txtDescripcion.setFont(labelFont);
+        txtDescripcion.setMargin(new Insets(6, 8, 6, 8));
+        
+        JScrollPane scrollDesc = new JScrollPane(txtDescripcion);
+        scrollDesc.setBorder(new javax.swing.border.LineBorder(new Color(180,180,180), 1, true));
+
+        gbc.gridx = 0; gbc.gridy = 0; gbc.weightx = 0;
+        JLabel lblFecha = new JLabel("Fecha límite:");
+        lblFecha.setFont(labelFont);
+        formPanel.add(lblFecha, gbc);
+        
+        gbc.gridx = 1; gbc.weightx = 1.0;
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.weighty = 0.3;
+        formPanel.add(spinnerFecha, gbc);
+
+        gbc.gridx = 0; gbc.gridy = 1; gbc.weightx = 0; gbc.weighty = 0;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.NORTHWEST;
+        JLabel lblDesc = new JLabel("Descripción:");
+        lblDesc.setFont(labelFont);
+        formPanel.add(lblDesc, gbc);
+        
+        gbc.gridx = 1; gbc.weightx = 1.0; gbc.weighty = 0.7;
+        gbc.fill = GridBagConstraints.BOTH;
+        formPanel.add(scrollDesc, gbc);
+
+        JPanel botones = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 10));
+        botones.setBackground(Color.WHITE);
+        
+        JButton btnGuardar = crearBotonRedondeado(esEdicion ? "Guardar Cambios" : "Guardar", Color.WHITE, Color.BLACK);
+        btnGuardar.setPreferredSize(new Dimension(140, 34));
+        agregarHoverAzul(btnGuardar);
+        btnGuardar.addActionListener(e -> {
+            String fecha = formato.format((Date) spinnerFecha.getValue());
+            String descripcion = txtDescripcion.getText().trim();
+            if (fecha.isEmpty() || descripcion.isEmpty()) {
+                JOptionPane.showMessageDialog(dialog, "Debe ingresar fecha y descripción.");
+                return;
+            }
+            try {
+                java.time.format.DateTimeFormatter dtf = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy");
+                java.time.LocalDate fechaSeleccionada = java.time.LocalDate.parse(fecha, dtf);
+                if (fechaSeleccionada.isBefore(java.time.LocalDate.now())) {
+                    JOptionPane.showMessageDialog(dialog, "La fecha límite debe ser mayor o igual al día de hoy.");
+                    return;
+                }
+            } catch (Exception ex) {}
+            if (esEdicion) {
+                String id = modeloTablaCalEntregas.getValueAt(filaModelo, 0).toString();
+                Entrega entrega = buscarEntregaPorId(id);
+                if (entrega != null) {
+                    entrega.setFechaLimite(fecha);
+                    entrega.setDescripcion(descripcion);
+                }
+            } else {
+                GestorEvidencias.getInstancia().agregarEntrega(new Entrega("", fecha, descripcion));
+            }
+            cargarDatosTablaCalEntregas();
+            dialog.dispose();
+        });
+        botones.add(btnGuardar);
+
+        JButton btnCancelar = crearBotonRedondeado("Cancelar", Color.WHITE, Color.BLACK);
+        btnCancelar.setPreferredSize(new Dimension(140, 34));
+        agregarHoverAzul(btnCancelar);
+        btnCancelar.addActionListener(e -> dialog.dispose());
+        botones.add(btnCancelar);
+
+        dialog.add(formPanel, BorderLayout.CENTER);
+        dialog.add(botones, BorderLayout.SOUTH);
+        dialog.setVisible(true);
+    }
+
     public void cargarDatosTablaTutor() {
         modeloTablaTutor.setRowCount(0);
         for (Evidencia ev : GestorEvidencias.getInstancia().getEvidencias()) {
@@ -251,6 +563,126 @@ public class PanelTutor extends JPanel {
         while (modeloTablaTutor.getRowCount() < 4) {
             modeloTablaTutor.addRow(new Object[] { "", "", "", "", "", "", "" });
         }
+    }
+
+    public void cargarDatosTablaCalEntregas() {
+        if (modeloTablaCalEntregas == null) {
+            return;
+        }
+        modeloTablaCalEntregas.setRowCount(0);
+        for (Entrega entrega : GestorEvidencias.getInstancia().getEntregas()) {
+            modeloTablaCalEntregas.addRow(new Object[] {
+                    entrega.getId(),
+                    "Abrir Archivo",
+                    entrega.getFechaLimite(),
+                    entrega.getDescripcion()
+            });
+        }
+    }
+
+    private Entrega buscarEntregaPorId(String id) {
+        for (Entrega entrega : GestorEvidencias.getInstancia().getEntregas()) {
+            if (entrega.getId().equals(id)) {
+                return entrega;
+            }
+        }
+        return null;
+    }
+
+    private class CalArchivoRenderer extends JButton implements TableCellRenderer {
+        CalArchivoRenderer() {
+            setText("Abrir Archivo");
+            setBackground(Color.WHITE);
+            setForeground(Color.BLACK);
+            setFont(StyleUtils.FUENTE_REGULAR);
+            setBorder(BorderFactory.createLineBorder(Color.BLACK));
+            setFocusPainted(false);
+            setContentAreaFilled(true);
+        }
+
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
+                boolean hasFocus, int row, int column) {
+            setText(value == null ? "Abrir Archivo" : value.toString());
+            return this;
+        }
+    }
+
+    private class CalArchivoEditor extends AbstractCellEditor implements TableCellEditor {
+        private final JButton boton;
+        private int fila;
+
+        CalArchivoEditor() {
+            boton = new JButton("Abrir Archivo");
+            boton.setBackground(Color.WHITE);
+            boton.setForeground(Color.BLACK);
+            boton.setFont(StyleUtils.FUENTE_REGULAR);
+            boton.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+            boton.setFocusPainted(false);
+            boton.addActionListener(e -> {
+                fireEditingStopped();
+                descargarArchivoEntrega(fila);
+            });
+        }
+
+        @Override
+        public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row,
+                int column) {
+            this.fila = table.convertRowIndexToModel(row);
+            boton.setText(value == null ? "Abrir Archivo" : value.toString());
+            return boton;
+        }
+
+        @Override
+        public Object getCellEditorValue() {
+            return "Abrir Archivo";
+        }
+    }
+
+
+
+    private void descargarArchivoEntrega(int filaModelo) {
+        String idEntrega = modeloTablaCalEntregas.getValueAt(filaModelo, 0).toString();
+        Evidencia evidencia = buscarEvidenciaPorEntrega(idEntrega);
+        if (evidencia == null || evidencia.getPathArchivo() == null || evidencia.getPathArchivo().trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Aún no hay archivo cargado por el estudiante para esta entrega.");
+            return;
+        }
+
+        File archivoOrigen = new File(evidencia.getPathArchivo());
+        if (!archivoOrigen.exists()) {
+            JOptionPane.showMessageDialog(this, "No se encontró el archivo original: " + evidencia.getPathArchivo());
+            return;
+        }
+
+        JFileChooser chooser = new JFileChooser();
+        chooser.setDialogTitle("Seleccione carpeta para descargar la actividad");
+        chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        if (chooser.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) {
+            return;
+        }
+
+        File destino = new File(chooser.getSelectedFile(), archivoOrigen.getName());
+        try {
+            Files.copy(archivoOrigen.toPath(), destino.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            if (Desktop.isDesktopSupported()) {
+                Desktop.getDesktop().open(destino);
+            }
+            JOptionPane.showMessageDialog(this, "Archivo descargado en: " + destino.getAbsolutePath());
+        } catch (IOException ex) {
+            JOptionPane.showMessageDialog(this, "No se pudo descargar el archivo: " + ex.getMessage(),
+                    "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private Evidencia buscarEvidenciaPorEntrega(String idEntrega) {
+        String nombreEsperado = "Cal. Evidencia " + idEntrega;
+        for (Evidencia ev : GestorEvidencias.getInstancia().getEvidencias()) {
+            if (nombreEsperado.equalsIgnoreCase(ev.getNombreEvidencia())) {
+                return ev;
+            }
+        }
+        return null;
     }
 
     // --- NUEVAS CLASES INTERNAS PARA EL BOTÓN EN LA TABLA ---
@@ -301,7 +733,7 @@ public class PanelTutor extends JPanel {
                                 for (Evidencia ev : GestorEvidencias.getInstancia().getEvidencias()) {
                                     if (ev.getIdEvidencia().equals(idEvidencia)) {
                                         panelFormularioPath.cargarEvidencia(ev);
-                                        cardLayout.show(panelContenidoDinamico, "VISTA_FORMULARIO");
+                                        cardLayout.show(panelContenidoDinamico, VISTA_FORMULARIO);
                                         break;
                                     }
                                 }

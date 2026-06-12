@@ -1,6 +1,7 @@
 package com.mycompany.parcial.controlador;
 
 import com.mycompany.parcial.modelo.Evidencia;
+import com.mycompany.parcial.modelo.Entrega;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,13 +14,16 @@ import java.util.List;
 public class GestorEvidencias {
     private static GestorEvidencias instancia;
     private List<Evidencia> evidencias;
+    private List<Entrega> entregas;
     private int contadorId = 1;
+    private int contadorEntregaId = 1;
 
     /**
      * Constructor privado para garantizar un único gestor de evidencias.
      */
     private GestorEvidencias() {
         evidencias = new ArrayList<>();
+        entregas = new ArrayList<>();
     }
 
     /**
@@ -51,5 +55,14 @@ public class GestorEvidencias {
      */
     public List<Evidencia> getEvidencias() {
         return evidencias;
+    }
+
+    public List<Entrega> getEntregas() {
+        return entregas;
+    }
+
+    public void agregarEntrega(Entrega entrega) {
+        entrega.setId(String.valueOf(contadorEntregaId++));
+        entregas.add(entrega);
     }
 }

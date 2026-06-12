@@ -8,8 +8,10 @@ import java.util.List;
 /**
  * Gestor singleton encargado de almacenar y administrar las evidencias.
  *
- * <p>Utiliza un patrón de instancia única para que todas las pantallas accedan a
- * la misma colección de evidencias en memoria.</p>
+ * <p>
+ * Utiliza un patrón de instancia única para que todas las pantallas accedan a
+ * la misma colección de evidencias en memoria.
+ * </p>
  */
 public class GestorEvidencias {
     private static GestorEvidencias instancia;
@@ -39,7 +41,8 @@ public class GestorEvidencias {
     }
 
     /**
-     * Asigna un identificador único a la evidencia y la agrega al repositorio en memoria.
+     * Asigna un identificador único a la evidencia y la agrega al repositorio en
+     * memoria.
      *
      * @param evidencia evidencia a agregar
      */
